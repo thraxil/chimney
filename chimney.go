@@ -19,8 +19,6 @@ type SmoketestData struct {
 }
 
 func (s *SmoketestData) Monitor(graphite string, interval int, jitter int) {
-	fmt.Println("starting monitor for", s.Url)
-	rand.Seed(int64(time.Now().Unix()))
 	for {
 		j := rand.Intn(jitter)
 		time.Sleep(time.Duration(interval+j) * time.Second)
@@ -91,9 +89,7 @@ func (s *SmoketestData) Check(graphite string) {
 	fmt.Fprintf(buffer, "%serrored %d %d\n", s.MetricPrefix, tr.TestsErrored, now)
 	fmt.Fprintf(buffer, "%sclasses %d %d\n", s.MetricPrefix, tr.TestClasses, now)
 	fmt.Fprintf(buffer, "%stime %f %d\n", s.MetricPrefix, tr.Time, now)
-	fmt.Print(string(buffer.Bytes()))
 	clientGraphite.Write(buffer.Bytes())
-
 }
 
 type ConfigData struct {
@@ -107,6 +103,7 @@ func main() {
 	var configFile string
 	flag.StringVar(&configFile, "config", "/etc/chimney/config.json", "JSON config file")
 	flag.Parse()
+	rand.Seed(int64(time.Now().Unix()))
 
 	file, err := ioutil.ReadFile(configFile)
 	if err != nil {
