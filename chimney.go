@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -70,7 +71,15 @@ func (s *SmoketestData) Check(graphite string) {
 	}
 	defer clientGraphite.Close()
 
-	client := &http.Client{}
+	// go doesn't like our certificates:
+	// "x509: certificate signed by unknown authority"
+	// Ideally, we'd whitelist them, but for smoketest
+	// purposes, it's probably OK to just go insecure
+	transport := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+
+	client := &http.Client{Transport: transport}
 	req, err := http.NewRequest("GET", s.Url, nil)
 	if err != nil {
 		return
