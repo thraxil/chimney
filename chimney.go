@@ -50,6 +50,18 @@ type TestResult struct {
 	FailedTests  []string `json:"failed_tests"`
 }
 
+func (t *TestResult) ToBytes(metric_prefix string) []byte {
+	now := int32(time.Now().Unix())
+	buffer := bytes.NewBufferString("")
+	fmt.Fprintf(buffer, "%srun %d %d\n", metric_prefix, t.TestsRun, now)
+	fmt.Fprintf(buffer, "%spassed %d %d\n", metric_prefix, t.TestsPassed, now)
+	fmt.Fprintf(buffer, "%sfailed %d %d\n", metric_prefix, t.TestsFailed, now)
+	fmt.Fprintf(buffer, "%serrored %d %d\n", metric_prefix, t.TestsErrored, now)
+	fmt.Fprintf(buffer, "%sclasses %d %d\n", metric_prefix, t.TestClasses, now)
+	fmt.Fprintf(buffer, "%stime %f %d\n", metric_prefix, t.Time, now)
+	return buffer.Bytes()
+}
+
 func (s *SmoketestData) Check(graphite string) {
 	var clientGraphite net.Conn
 	clientGraphite, err := net.Dial("tcp", graphite)
@@ -81,15 +93,7 @@ func (s *SmoketestData) Check(graphite string) {
 		return
 	}
 
-	now := int32(time.Now().Unix())
-	buffer := bytes.NewBufferString("")
-	fmt.Fprintf(buffer, "%srun %d %d\n", s.MetricPrefix, tr.TestsRun, now)
-	fmt.Fprintf(buffer, "%spassed %d %d\n", s.MetricPrefix, tr.TestsPassed, now)
-	fmt.Fprintf(buffer, "%sfailed %d %d\n", s.MetricPrefix, tr.TestsFailed, now)
-	fmt.Fprintf(buffer, "%serrored %d %d\n", s.MetricPrefix, tr.TestsErrored, now)
-	fmt.Fprintf(buffer, "%sclasses %d %d\n", s.MetricPrefix, tr.TestClasses, now)
-	fmt.Fprintf(buffer, "%stime %f %d\n", s.MetricPrefix, tr.Time, now)
-	clientGraphite.Write(buffer.Bytes())
+	clientGraphite.Write(tr.ToBytes(s.MetricPrefix))
 }
 
 type ConfigData struct {
