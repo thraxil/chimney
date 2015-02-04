@@ -82,23 +82,31 @@ func (s *SmoketestData) Check(graphite string) {
 	client := &http.Client{Transport: transport}
 	req, err := http.NewRequest("GET", s.Url, nil)
 	if err != nil {
+		tr := TestResult{Status: "FAIL", TestsPassed: 0, TestsFailed: 0, TestsErrored: 0, TestsRun: 0, TestClasses: 0, Time: 0.0}
+		clientGraphite.Write(tr.ToBytes(s.MetricPrefix))
 		return
 	}
 	req.Header.Set("accept", "application/json")
 	resp, err := client.Do(req)
 	if err != nil {
+		tr := TestResult{Status: "FAIL", TestsPassed: 0, TestsFailed: 0, TestsErrored: 0, TestsRun: 0, TestClasses: 0, Time: 0.0}
+		clientGraphite.Write(tr.ToBytes(s.MetricPrefix))
 		return
 	}
 
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
+		tr := TestResult{Status: "FAIL", TestsPassed: 0, TestsFailed: 0, TestsErrored: 0, TestsRun: 0, TestClasses: 0, Time: 0.0}
+		clientGraphite.Write(tr.ToBytes(s.MetricPrefix))
 		return
 	}
 
 	tr := TestResult{}
 	err = json.Unmarshal(body, &tr)
 	if err != nil {
+		tr := TestResult{Status: "FAIL", TestsPassed: 0, TestsFailed: 0, TestsErrored: 0, TestsRun: 0, TestClasses: 0, Time: 0.0}
+		clientGraphite.Write(tr.ToBytes(s.MetricPrefix))
 		return
 	}
 
