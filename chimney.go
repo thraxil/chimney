@@ -14,12 +14,12 @@ import (
 	"time"
 )
 
-type SmoketestData struct {
-	Url          string
+type smoketestData struct {
+	URL          string
 	MetricPrefix string
 }
 
-func (s *SmoketestData) Monitor(graphite string, interval int, jitter int) {
+func (s *smoketestData) Monitor(graphite string, interval int, jitter int) {
 	for {
 		j := rand.Intn(jitter)
 		time.Sleep(time.Duration(interval+j) * time.Second)
@@ -39,7 +39,7 @@ func (s *SmoketestData) Monitor(graphite string, interval int, jitter int) {
  "tests_errored": 1}
 */
 
-type TestResult struct {
+type testResult struct {
 	Status       string   `json:"status"`
 	TestsPassed  int      `json:"tests_passed"`
 	TestsFailed  int      `json:"tests_failed"`
@@ -51,19 +51,19 @@ type TestResult struct {
 	FailedTests  []string `json:"failed_tests"`
 }
 
-func (t *TestResult) ToBytes(metric_prefix string) []byte {
+func (t *testResult) ToBytes(metricPrefix string) []byte {
 	now := int32(time.Now().Unix())
 	buffer := bytes.NewBufferString("")
-	fmt.Fprintf(buffer, "%srun %d %d\n", metric_prefix, t.TestsRun, now)
-	fmt.Fprintf(buffer, "%spassed %d %d\n", metric_prefix, t.TestsPassed, now)
-	fmt.Fprintf(buffer, "%sfailed %d %d\n", metric_prefix, t.TestsFailed, now)
-	fmt.Fprintf(buffer, "%serrored %d %d\n", metric_prefix, t.TestsErrored, now)
-	fmt.Fprintf(buffer, "%sclasses %d %d\n", metric_prefix, t.TestClasses, now)
-	fmt.Fprintf(buffer, "%stime %f %d\n", metric_prefix, t.Time, now)
+	fmt.Fprintf(buffer, "%srun %d %d\n", metricPrefix, t.TestsRun, now)
+	fmt.Fprintf(buffer, "%spassed %d %d\n", metricPrefix, t.TestsPassed, now)
+	fmt.Fprintf(buffer, "%sfailed %d %d\n", metricPrefix, t.TestsFailed, now)
+	fmt.Fprintf(buffer, "%serrored %d %d\n", metricPrefix, t.TestsErrored, now)
+	fmt.Fprintf(buffer, "%sclasses %d %d\n", metricPrefix, t.TestClasses, now)
+	fmt.Fprintf(buffer, "%stime %f %d\n", metricPrefix, t.Time, now)
 	return buffer.Bytes()
 }
 
-func (s *SmoketestData) Check(graphite string) {
+func (s *smoketestData) Check(graphite string) {
 	var clientGraphite net.Conn
 	clientGraphite, err := net.Dial("tcp", graphite)
 	if err != nil || clientGraphite == nil {
@@ -80,16 +80,16 @@ func (s *SmoketestData) Check(graphite string) {
 	}
 
 	client := &http.Client{Transport: transport}
-	req, err := http.NewRequest("GET", s.Url, nil)
+	req, err := http.NewRequest("GET", s.URL, nil)
 	if err != nil {
-		tr := TestResult{Status: "FAIL", TestsPassed: 0, TestsFailed: 0, TestsErrored: 0, TestsRun: 0, TestClasses: 0, Time: 0.0}
+		tr := testResult{Status: "FAIL", TestsPassed: 0, TestsFailed: 0, TestsErrored: 0, TestsRun: 0, TestClasses: 0, Time: 0.0}
 		clientGraphite.Write(tr.ToBytes(s.MetricPrefix))
 		return
 	}
 	req.Header.Set("accept", "application/json")
 	resp, err := client.Do(req)
 	if err != nil {
-		tr := TestResult{Status: "FAIL", TestsPassed: 0, TestsFailed: 0, TestsErrored: 0, TestsRun: 0, TestClasses: 0, Time: 0.0}
+		tr := testResult{Status: "FAIL", TestsPassed: 0, TestsFailed: 0, TestsErrored: 0, TestsRun: 0, TestClasses: 0, Time: 0.0}
 		clientGraphite.Write(tr.ToBytes(s.MetricPrefix))
 		return
 	}
@@ -97,15 +97,15 @@ func (s *SmoketestData) Check(graphite string) {
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		tr := TestResult{Status: "FAIL", TestsPassed: 0, TestsFailed: 0, TestsErrored: 0, TestsRun: 0, TestClasses: 0, Time: 0.0}
+		tr := testResult{Status: "FAIL", TestsPassed: 0, TestsFailed: 0, TestsErrored: 0, TestsRun: 0, TestClasses: 0, Time: 0.0}
 		clientGraphite.Write(tr.ToBytes(s.MetricPrefix))
 		return
 	}
 
-	tr := TestResult{}
+	tr := testResult{}
 	err = json.Unmarshal(body, &tr)
 	if err != nil {
-		tr := TestResult{Status: "FAIL", TestsPassed: 0, TestsFailed: 0, TestsErrored: 0, TestsRun: 0, TestClasses: 0, Time: 0.0}
+		tr := testResult{Status: "FAIL", TestsPassed: 0, TestsFailed: 0, TestsErrored: 0, TestsRun: 0, TestClasses: 0, Time: 0.0}
 		clientGraphite.Write(tr.ToBytes(s.MetricPrefix))
 		return
 	}
@@ -113,11 +113,11 @@ func (s *SmoketestData) Check(graphite string) {
 	clientGraphite.Write(tr.ToBytes(s.MetricPrefix))
 }
 
-type ConfigData struct {
+type configData struct {
 	GraphiteBase string
 	PollInterval int
 	Jitter       int
-	Tests        []SmoketestData
+	Tests        []smoketestData
 }
 
 func main() {
@@ -131,7 +131,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	f := ConfigData{}
+	f := configData{}
 	err = json.Unmarshal(file, &f)
 	if err != nil {
 		log.Fatal(err)
