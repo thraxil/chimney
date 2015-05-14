@@ -76,3 +76,9 @@ Chimney will turn that into Graphite metrics like (assuming this is
     smoketest.app1.errored 1
     smoketest.app1.time 1298.7720966339111
 
+## Docker
+
+There's also a docker packaged version of chimney available. Run it
+like:
+
+    $ docker run -v /path/to/config.json:/etc/chimney/config.json thraxil/chimney
