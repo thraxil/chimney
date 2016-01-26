@@ -146,8 +146,6 @@ func (s *smoketestData) Check(graphite string) {
 		clientGraphite.Write(tr.ToBytes(s.MetricPrefix))
 		return
 	}
-
-	clientGraphite.Write(tr.ToBytes(s.MetricPrefix))
 	log.WithFields(
 		log.Fields{
 			"URL":          s.URL,
@@ -159,6 +157,9 @@ func (s *smoketestData) Check(graphite string) {
 			"TestClasses":  tr.TestClasses,
 			"Time":         tr.Time,
 		}).Debug("finished checking smoketest")
+
+	clientGraphite.Write(tr.ToBytes(s.MetricPrefix))
+	log.WithFields(log.Fields{"URL": s.URL, "graphite": graphite}).Debug("submitted to graphite")
 }
 
 type configData struct {
