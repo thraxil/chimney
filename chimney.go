@@ -14,7 +14,12 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/kelseyhightower/envconfig"
 )
+
+type config struct {
+	LogLevel string `envconfig:"LOG_LEVEL"`
+}
 
 type smoketestData struct {
 	URL          string
@@ -123,6 +128,24 @@ type configData struct {
 }
 
 func main() {
+	log.SetLevel(log.InfoLevel)
+	var c config
+	err := envconfig.Process("chimney", &c)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	if c.LogLevel == "DEBUG" {
+		log.SetLevel(log.DebugLevel)
+	}
+	if c.LogLevel == "WARN" {
+		log.SetLevel(log.WarnLevel)
+	}
+	if c.LogLevel == "ERROR" {
+		log.SetLevel(log.ErrorLevel)
+	}
+	if c.LogLevel == "FATAL" {
+		log.SetLevel(log.FatalLevel)
+	}
 	var configFile string
 	flag.StringVar(&configFile, "config", "/etc/chimney/config.json", "JSON config file")
 	flag.Parse()
