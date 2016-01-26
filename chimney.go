@@ -27,6 +27,10 @@ type smoketestData struct {
 }
 
 func (s *smoketestData) Monitor(graphite string, interval int, jitter int) {
+	log.WithFields(
+		log.Fields{
+			"metric": graphite,
+		}).Debug("starting monitor")
 	for {
 		j := rand.Intn(jitter)
 		time.Sleep(time.Duration(interval+j) * time.Second)
@@ -71,6 +75,10 @@ func (t *testResult) ToBytes(metricPrefix string) []byte {
 }
 
 func (s *smoketestData) Check(graphite string) {
+	log.WithFields(
+		log.Fields{
+			"URL": s.URL,
+		}).Debug("checking smoketest")
 	var clientGraphite net.Conn
 	clientGraphite, err := net.Dial("tcp", graphite)
 	if err != nil || clientGraphite == nil {
@@ -89,6 +97,12 @@ func (s *smoketestData) Check(graphite string) {
 	client := &http.Client{Transport: transport}
 	req, err := http.NewRequest("GET", s.URL, nil)
 	if err != nil {
+		log.WithFields(
+			log.Fields{
+				"URL":   s.URL,
+				"error": err,
+			}).Error("error constructing request")
+
 		tr := testResult{Status: "FAIL", TestsPassed: 0, TestsFailed: 0, TestsErrored: 0, TestsRun: 0, TestClasses: 0, Time: 0.0}
 		clientGraphite.Write(tr.ToBytes(s.MetricPrefix))
 		return
@@ -96,6 +110,11 @@ func (s *smoketestData) Check(graphite string) {
 	req.Header.Set("accept", "application/json")
 	resp, err := client.Do(req)
 	if err != nil {
+		log.WithFields(
+			log.Fields{
+				"URL":   s.URL,
+				"error": err,
+			}).Error("error making request")
 		tr := testResult{Status: "FAIL", TestsPassed: 0, TestsFailed: 0, TestsErrored: 0, TestsRun: 0, TestClasses: 0, Time: 0.0}
 		clientGraphite.Write(tr.ToBytes(s.MetricPrefix))
 		return
@@ -104,6 +123,11 @@ func (s *smoketestData) Check(graphite string) {
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
+		log.WithFields(
+			log.Fields{
+				"URL":   s.URL,
+				"error": err,
+			}).Error("error reading response")
 		tr := testResult{Status: "FAIL", TestsPassed: 0, TestsFailed: 0, TestsErrored: 0, TestsRun: 0, TestClasses: 0, Time: 0.0}
 		clientGraphite.Write(tr.ToBytes(s.MetricPrefix))
 		return
@@ -112,12 +136,29 @@ func (s *smoketestData) Check(graphite string) {
 	tr := testResult{}
 	err = json.Unmarshal(body, &tr)
 	if err != nil {
+		log.WithFields(
+			log.Fields{
+				"URL":   s.URL,
+				"error": err,
+			}).Error("error parsing JSON")
+
 		tr := testResult{Status: "FAIL", TestsPassed: 0, TestsFailed: 0, TestsErrored: 0, TestsRun: 0, TestClasses: 0, Time: 0.0}
 		clientGraphite.Write(tr.ToBytes(s.MetricPrefix))
 		return
 	}
 
 	clientGraphite.Write(tr.ToBytes(s.MetricPrefix))
+	log.WithFields(
+		log.Fields{
+			"URL":          s.URL,
+			"Status":       tr.Status,
+			"TestsPassed":  tr.TestsPassed,
+			"TestsFailed":  tr.TestsFailed,
+			"TestsErrored": tr.TestsErrored,
+			"TestsRun":     tr.TestsRun,
+			"TestClasses":  tr.TestClasses,
+			"Time":         tr.Time,
+		}).Debug("finished checking smoketest")
 }
 
 type configData struct {
@@ -176,7 +217,10 @@ func main() {
 		test := t
 		go test.Monitor(f.GraphiteBase, f.PollInterval, f.Jitter)
 	}
+	log.Info("chimney started")
+
 	// wait on a dummy channel. equiv of "while(True)"
 	// Ie, this program runs until it gets a Ctrl-C or equivalent signal
 	<-dummy
+	log.Info("chimney shutting down")
 }
