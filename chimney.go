@@ -7,11 +7,13 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"log"
+
 	"math/rand"
 	"net"
 	"net/http"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 type smoketestData struct {
@@ -128,13 +130,22 @@ func main() {
 
 	file, err := ioutil.ReadFile(configFile)
 	if err != nil {
-		log.Fatal(err)
+		log.WithFields(
+			log.Fields{
+				"error":      err,
+				"configFile": configFile,
+			},
+		).Fatal("couldn't read config file")
 	}
 
 	f := configData{}
 	err = json.Unmarshal(file, &f)
 	if err != nil {
-		log.Fatal(err)
+		log.WithFields(
+			log.Fields{
+				"error": err,
+			},
+		).Fatal("couldn't parse config file")
 	}
 
 	dummy := make(chan int)
