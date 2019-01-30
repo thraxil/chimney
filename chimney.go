@@ -1,4 +1,4 @@
-package main // import "github.com/thraxil/chimney"
+package main // import "github.com/ccnmtl/chimney"
 
 import (
 	"bytes"
