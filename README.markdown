@@ -81,4 +81,4 @@ Chimney will turn that into Graphite metrics like (assuming this is
 There's also a docker packaged version of chimney available. Run it
 like:
 
-    $ docker run -v /path/to/config.json:/etc/chimney/config.json thraxil/chimney
+    $ docker run -v /path/to/config.json:/etc/chimney/config.json ccnmtl/chimney

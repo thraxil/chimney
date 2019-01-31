@@ -1,4 +1,4 @@
-package: github.com/thraxil/chimney
+package: github.com/ccnmtl/chimney
 import:
 - package: github.com/Sirupsen/logrus
   version: ^0.11.0
